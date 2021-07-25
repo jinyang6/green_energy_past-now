@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html style="overflow-x: hidden;overflow-y: scroll">
+<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+<title>Hydropower</title>
+<header>
+    <a href="index.html">back to overview</a>
+    <h1 style="text-align: center;">Hydropower development</h1>
+</header>
+<body>
+    <div id="chart-icon-container" style="width:100vw;height:70vh;">
+        <div id="chart-container" style="width:60vw;height:70vh;float:left;">
+            <small id="hover-hint-container" style="color:red;position:relative;width:100vw;left:130px;top:30px;display:flex;flex-direction:column;">*Hover mouse above data points to see exact TW/h of that year.</small>
+            <svg id="hydropower-chart" style="position:relative;left:5vw;width:700px;height:700px;float:left"></svg>
+            <div id="chart-annotation" style="position:absolute;left:760px;top:125px;width:460px;height:auto;border:5px solid #0096FF;word-wrap:break-all;border-radius:20px;">
+                <div style="border:5px solid transparent;border-radius:25px;width:99%;height:99%">
+                    Hydropower's total output increased the most over the past 20 years. So, its development is critical on our path to carbon-neutral.
+                </div>
+            </div>
+            <div id="mouseover-window" style="opacity:0;position:absolute;font-weight:bold;color:green"></div>
+        </div>
+        <div id="icon-container" style="position:relative;width:40vw;height:70vh;float:left;">
+            <div style="background-image:url('https://s.abcnews.com/images/International/WireAP_bf302e5438bd4e54986cf5a55f7b3c51_16x9_1600.jpg');background-repeat:no-repeat;background-size:contain;background-position:center;width:100%;height:100%;position:relative;margin-top:5%"></div>
+        </div>
+    </div>
+    
+    
+    <iframe src="https://en.wikipedia.org/wiki/Hydropower" frameborder="0" style="width:100vw;height:100vh"></iframe>
+    
+</body>
+</html>
+<script>
+var hydropower = [{ TW_h:2652.0, year:2000},
+                    { TW_h:2583.9, year:2001},
+                    { TW_h:2631.8, year:2002},
+                    { TW_h:2627.6, year:2003},
+                    { TW_h:2820.7, year:2004},
+                    { TW_h:2916.4, year:2005},
+                    { TW_h:3027.7, year:2006},
+                    { TW_h:3079.3, year:2007},
+                    { TW_h:3257.4, year:2008},
+                    { TW_h:3252.5, year:2009},
+                    { TW_h:3435.8, year:2010},
+                    { TW_h:3501.1, year:2011},
+                    { TW_h:3649.8, year:2012},
+                    { TW_h:3795.9, year:2013},
+                    { TW_h:3894.2, year:2014},
+                    { TW_h:3885.0, year:2015},
+                    { TW_h:4018.7, year:2016},
+                    { TW_h:4066.7, year:2017},
+                    { TW_h:4176.7, year:2018},
+                    { TW_h:4227.9, year:2019},
+                    { TW_h:4296.8, year:2020}]
+
+var svg = d3.select("#hydropower-chart")
+var x_yearScale = d3.scalePoint().domain(hydropower.map(function (data_item, i){return data_item.year})).range([0,600])
+var y_TW_hScale = d3.scaleLinear()
+.domain([Math.min(...hydropower.map(function (data_item, i){return data_item.TW_h})) - 10, Math.max(...hydropower.map(function (data_item, i){return data_item.TW_h})) + 10])
+.range([400,0])
+
+svg.append("g").attr("transform","translate(60,450)").call(d3.axisBottom(x_yearScale))
+                                                                                    .append("text")
+                                                                                    .attr("fill", "black")
+                                                                                    .attr("transform","translate(630, 15)")
+                                                                                    .text("year")
+                                                                                    
+
+svg.append("g").attr("transform","translate(60,50)").call(d3.axisLeft(y_TW_hScale).tickFormat(function(TW_h) {return TW_h.toString() + "TW/h"}))
+                                                                                    .append("text")
+                                                                                    .attr("fill", "black")
+                                                                                    .attr("transform","translate(10, -5)")
+                                                                                    .text("TW/h");
+svg.append("g").attr("transform","translate(60,50)").append("path")
+      .datum(hydropower)
+      .attr("stroke", "#008dc7")
+      .attr("stroke-width", 2.0)
+      .attr("d", d3.line()
+        .x(function(data_item) { return x_yearScale(data_item.year) })
+        .y(function(data_item) { return y_TW_hScale(data_item.TW_h) })
+        ).attr("fill", "none")
+
+svg.append("g").attr("transform","translate(60,50)").selectAll(null).enter().data(hydropower).enter().append("circle")
+        .attr("id", function(data_item, i) { return "hydropower-circle-" + i })
+        .attr("cx", function(data_item) { return x_yearScale(data_item.year) })
+        .attr("cy", function(data_item) { return y_TW_hScale(data_item.TW_h) })
+        .attr("r", 5)
+        .attr("fill", "black")
+        .on("mouseover", function(data_item, i) {
+            d3.select("#mouseover-window")
+            .style("top",(d3.event.pageY - 40)+"px")
+            .style("left",(d3.event.pageX - 40)+"px")
+            .style("opacity", 1)	
+            .html("<text>" + data_item.TW_h.toString() + "TW/h </text>")
+
+            d3.select(this).transition().attr("fill", "#66ff00").attr("r",10)
+        })
+        .on("mouseout", function(data_item, i) {
+            d3.select("#mouseover-window").style("opacity", 0).style("top","0px").style("left","0px")
+            d3.select(this).transition().attr("fill", "black").attr("r",5)
+        })
+var last_point_index = hydropower.length - 1
+var last_point_object = svg.select("#hydropower-circle-" + last_point_index.toString())
+last_point_object
+    .attr("stroke", "#FEE101")
+    .attr("stroke-width", "4px")
+
+
+
+</script>
